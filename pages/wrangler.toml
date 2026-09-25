@@ -6,3 +6,7 @@ compatibility_date = "2024-05-13"
 binding = "BACKEND"
 service = "cloudflare_temp_email"
 environment = "production"
+[[d1_databases]]
+binding = "DB"
+database_name = "vmail"
+database_id = "DÁN_DATABASE_ID_VỪA_COPY_VÀO_ĐÂY"
