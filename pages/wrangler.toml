@@ -9,4 +9,4 @@ environment = "production"
 [[d1_databases]]
 binding = "DB"
 database_name = "vmail"
-database_id = "DÁN_DATABASE_ID_VỪA_COPY_VÀO_ĐÂY"
+database_id = "a413b2fc-c481-4bb8-a84b-33f3612d824f"
