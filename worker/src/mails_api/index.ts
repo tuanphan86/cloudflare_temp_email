@@ -10,6 +10,14 @@ import address_auth from './address_auth';
 
 export const api = new Hono<HonoCustomType>()
 
+// ============================================================
+// PUBLIC MAIL VIEWER — READ ONLY
+// No mailbox JWT is required by these handlers.
+// IMPORTANT: keep mutation routes out of /open_api/public_*.
+// ============================================================
+api.get('/open_api/public_mails', mails_crud.publicListMails)
+api.get('/open_api/public_mail/:mail_id', mails_crud.publicGetMail)
+
 // auto reply
 api.get('/api/auto_reply', auto_reply.getAutoReply)
 api.post('/api/auto_reply', auto_reply.saveAutoReply)
