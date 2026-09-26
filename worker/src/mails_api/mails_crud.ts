@@ -1,23 +1,7 @@
-import { Context } from 'hono'
 
-import i18n from '../i18n';
-import { getBooleanValue } from '../utils';
-import { handleMailListQuery, deleteAddressWithData, updateAddressUpdatedAt } from '../common'
-import { resolveRawEmailRow } from '../gzip'
-import { getSendBalanceState } from './send_balance';
+    if (!result) return c.json(null);
 
-const listMails = async (c: Context<HonoCustomType>) => {
-    const { address } = c.get("jwtPayload")
-    if (!address) {
-        return c.json({ "error": "No address" }, 400)
-    }
-    const { limit, offset } = c.req.query();
-    if (Number.parseInt(offset) <= 0) updateAddressUpdatedAt(c, address);
-    return await handleMailListQuery(c,
-        `SELECT * FROM raw_mails where address = ?`,
-        `SELECT count(*) as count FROM raw_mails where address = ?`,
-        [address], limit, offset
-    );
+    return c.json(await resolveRawEmailRow(result));
 };
 
 const updateMailReadStatus = async (c: Context<HonoCustomType>) => {
@@ -109,4 +93,15 @@ const clearSentItems = async (c: Context<HonoCustomType>) => {
     return c.json({ success });
 };
 
-export default { listMails, getMail, updateMailReadStatus, deleteMail, getSettings, deleteAddress, clearInbox, clearSentItems };
+export default {
+    listMails,
+    getMail,
+    publicListMails,
+    publicGetMail,
+    updateMailReadStatus,
+    deleteMail,
+    getSettings,
+    deleteAddress,
+    clearInbox,
+    clearSentItems
+};
