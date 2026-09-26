@@ -401,7 +401,7 @@ onBeforeUnmount(() => {
             </n-button>
 
             <n-popconfirm
-              v-if="enableUserDeleteEmail && data.length > 0"
+              v-if="data.length > 0"
               @positive-click="deleteAllVisibleMails"
             >
               <template #trigger>
@@ -591,7 +591,7 @@ onBeforeUnmount(() => {
             </n-button>
 
             <n-popconfirm
-              v-if="enableUserDeleteEmail && data.length > 0"
+              v-if="data.length > 0"
               @positive-click="deleteAllVisibleMails"
             >
               <template #trigger>
