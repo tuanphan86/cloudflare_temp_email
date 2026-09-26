@@ -109,68 +109,252 @@ onMounted(() => {
 <template>
   <div class="mail-viewer-page">
     <div class="mail-viewer-shell">
+
+      <!-- HERO -->
       <header class="mail-viewer-hero">
         <h1>Mail Viewer</h1>
         <p>Enter email and click Load to view inbox</p>
       </header>
 
       <div class="mail-viewer-divider"></div>
-    <div v-if="useSimpleIndex">
-      <SimpleIndex />
-    </div>
-    <div v-else>
-      <AddressBar />
-      <n-tabs v-if="settings.address" type="card" v-model:value="indexTab" :placement="globalTabplacement">
-        <template #prefix v-if="!isMobile">
-          <n-button @click="useSimpleIndex = true" tertiary size="small">
-            <template #icon>
-              <n-icon>
-                <FullscreenExitOutlined />
-              </n-icon>
-            </template>
-            {{ t('enterSimpleMode') }}
-          </n-button>
-        </template>
-        <n-tab-pane name="mailbox" :tab="t('inbox')">
-          <div v-if="showMailIdQuery" style="margin-bottom: 10px;">
-            <n-input-group>
-              <n-input v-model:value="mailIdQuery" />
-              <n-button @click="queryMail" type="primary" tertiary>
-                {{ t('query') }}
-              </n-button>
-            </n-input-group>
-          </div>
-          <MailBox :key="mailBoxKey" :showEMailTo="false" :showReply="openSettings.enableSendMail" :showSaveS3="openSettings.isS3Enabled"
-            :saveToS3="saveToS3" :enableUserDeleteEmail="openSettings.enableUserDeleteEmail"
-            :fetchMailData="fetchMailData" :deleteMail="deleteMail" :showFilterInput="true"
-            :enableMailReadStatus="openSettings.enableMailReadStatus" :updateMailReadStatus="updateMailReadStatus" />
-        </n-tab-pane>
-        <n-tab-pane v-if="openSettings.enableSendMail" name="sendbox" :tab="t('sendbox')">
-          <SendBox :fetchMailData="fetchSenboxData" :enableUserDeleteEmail="openSettings.enableUserDeleteEmail"
-            :deleteMail="deleteSenboxMail" />
-        </n-tab-pane>
-        <n-tab-pane v-if="openSettings.enableSendMail" name="sendmail" :tab="t('sendmail')">
-          <SendMail />
-        </n-tab-pane>
-        <n-tab-pane name="accountSettings" :tab="t('mailboxSettings')">
-          <AccountSettings />
-        </n-tab-pane>
-        <n-tab-pane name="appearance" :tab="t('appearance')">
-          <Appearance :showUseSimpleIndex="true" />
-        </n-tab-pane>
-        <n-tab-pane v-if="openSettings.enableAutoReply" name="auto_reply" :tab="t('auto_reply')">
-          <AutoReply />
-        </n-tab-pane>
-        <n-tab-pane v-if="openSettings.enableWebhook" name="webhook" :tab="t('webhookSettings')">
-          <Webhook />
-        </n-tab-pane>
-        <n-tab-pane v-if="openSettings.isS3Enabled" name="s3_attachment" :tab="t('s3Attachment')">
-          <Attachment />
-        </n-tab-pane>
-        <n-tab-pane v-if="openSettings.enableIndexAbout" name="about" :tab="t('about')">
-          <About />
-        </n-tab-pane>
-      </n-tabs>
+
+      <!-- CURRENT ADDRESS / LOGIN -->
+      <section class="mail-viewer-address">
+        <AddressBar />
+      </section>
+
+      <!-- MAILBOX -->
+      <section
+        v-if="settings.address"
+        class="mail-viewer-workspace"
+      >
+        <n-tabs
+          v-model:value="indexTab"
+          type="line"
+          animated
+          class="mail-viewer-tabs"
+        >
+          <n-tab-pane
+            name="inbox"
+            :tab="t('inbox')"
+            display-directive="show"
+          >
+            <MailBox
+              :fetchMailData="fetchMailData"
+              :deleteMail="deleteMail"
+              :enableUserDeleteEmail="openSettings.enableUserDeleteEmail"
+              :showReply="openSettings.enableSendMail"
+              :showSaveS3="openSettings.enableSaveToS3"
+              :saveToS3="saveToS3"
+              :showFilterInput="true"
+              :enableMailReadStatus="openSettings.enableMailReadStatus"
+              :updateMailReadStatus="updateMailReadStatus"
+            />
+          </n-tab-pane>
+
+          <n-tab-pane
+            v-if="openSettings.enableSendMail"
+            name="sendbox"
+            :tab="t('sendBox')"
+            display-directive="show"
+          >
+            <SendBox
+              :fetchMailData="fetchSendMailData"
+            />
+          </n-tab-pane>
+
+          <n-tab-pane
+            v-if="openSettings.enableSendMail"
+            name="sendmail"
+            :tab="t('sendMail')"
+            display-directive="show"
+          >
+            <SendMail />
+          </n-tab-pane>
+
+          <n-tab-pane
+            name="settings"
+            :tab="t('mailboxSettings')"
+            display-directive="show"
+          >
+            <AccountSettings />
+          </n-tab-pane>
+
+          <n-tab-pane
+            name="appearance"
+            :tab="t('appearance')"
+            display-directive="show"
+          >
+            <Appearance />
+          </n-tab-pane>
+
+          <n-tab-pane
+            v-if="openSettings.enableAutoReply"
+            name="autoReply"
+            :tab="t('autoReply')"
+            display-directive="show"
+          >
+            <AutoReply />
+          </n-tab-pane>
+
+          <n-tab-pane
+            v-if="openSettings.enableWebhook"
+            name="webhook"
+            :tab="t('webhook')"
+            display-directive="show"
+          >
+            <Webhook />
+          </n-tab-pane>
+
+          <n-tab-pane
+            v-if="openSettings.enableSaveToS3"
+            name="attachment"
+            :tab="t('attachment')"
+            display-directive="show"
+          >
+            <Attachment />
+          </n-tab-pane>
+
+          <n-tab-pane
+            name="about"
+            :tab="t('about')"
+            display-directive="show"
+          >
+            <About />
+          </n-tab-pane>
+        </n-tabs>
+      </section>
+
     </div>
   </div>
 </template>
+
+<style scoped>
+.mail-viewer-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #0c0f14;
+  color: #e8edf5;
+  padding: 28px 24px 60px;
+  box-sizing: border-box;
+}
+
+.mail-viewer-shell {
+  width: 100%;
+  max-width: 1060px;
+  margin: 0 auto;
+}
+
+/* HERO */
+
+.mail-viewer-hero {
+  text-align: center;
+  padding: 0 20px 22px;
+}
+
+.mail-viewer-hero h1 {
+  margin: 0;
+  color: #75e6d2;
+  font-size: 29px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.mail-viewer-hero p {
+  margin: 10px 0 0;
+  color: #aab3c5;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.mail-viewer-divider {
+  width: 100%;
+  height: 1px;
+  background: #2a303c;
+  margin-bottom: 24px;
+}
+
+/* ADDRESS AREA */
+
+.mail-viewer-address {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* WORKSPACE */
+
+.mail-viewer-workspace {
+  width: 100%;
+}
+
+.mail-viewer-tabs {
+  color: #dce3ef;
+}
+
+/* Force dark appearance inside homepage */
+
+.mail-viewer-page :deep(.n-card) {
+  background: #151922;
+  color: #e8edf5;
+  border-color: #2b3240;
+}
+
+.mail-viewer-page :deep(.n-alert) {
+  background: #151922;
+  border: 1px solid #2b3240;
+  color: #dce3ef;
+}
+
+.mail-viewer-page :deep(.n-tabs-nav) {
+  color: #aeb7c8;
+}
+
+.mail-viewer-page :deep(.n-tab-pane) {
+  color: #dce3ef;
+}
+
+.mail-viewer-page :deep(.n-list) {
+  background: #151922;
+  color: #e8edf5;
+}
+
+.mail-viewer-page :deep(.n-list-item) {
+  color: #e8edf5;
+  border-color: #2b3240;
+}
+
+.mail-viewer-page :deep(.n-thing) {
+  color: #e8edf5;
+}
+
+.mail-viewer-page :deep(.n-thing-header__title) {
+  color: #e8edf5;
+}
+
+@media (max-width: 768px) {
+  .mail-viewer-page {
+    padding: 20px 12px 40px;
+  }
+
+  .mail-viewer-shell {
+    max-width: 100%;
+  }
+
+  .mail-viewer-hero {
+    padding-bottom: 18px;
+  }
+
+  .mail-viewer-hero h1 {
+    font-size: 25px;
+  }
+
+  .mail-viewer-hero p {
+    font-size: 13px;
+  }
+
+  .mail-viewer-divider {
+    margin-bottom: 18px;
+  }
+}
+</style>
