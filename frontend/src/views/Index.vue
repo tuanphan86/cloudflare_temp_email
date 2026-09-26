@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useGlobalState } from '../store'
@@ -9,7 +9,6 @@ import AddressBar from './index/AddressBar.vue'
 import MailBox from '../components/MailBox.vue'
 
 const {
-  settings,
   openSettings
 } = useGlobalState()
 
@@ -17,13 +16,43 @@ const message = useMessage()
 const route = useRoute()
 
 /* =========================================================
-   MAIL DATA
+   PUBLIC VIEWER STATE
+   ========================================================= */
+
+const viewerAddress = ref('')
+const mailBoxKey = ref('')
+
+const mailIdQuery = ref('')
+const showMailIdQuery = ref(false)
+
+const queryMail = () => {
+  mailBoxKey.value = String(Date.now())
+}
+
+const loadPublicMailbox = (address) => {
+  viewerAddress.value = String(address || '').trim().toLowerCase()
+  mailIdQuery.value = ''
+  showMailIdQuery.value = false
+  queryMail()
+}
+
+/* =========================================================
+   PUBLIC MAIL DATA — READ ONLY
    ========================================================= */
 
 const fetchMailData = async (limit, offset) => {
+  if (!viewerAddress.value) {
+    return {
+      results: [],
+      count: 0
+    }
+  }
+
+  const encodedAddress = encodeURIComponent(viewerAddress.value)
+
   if (mailIdQuery.value > 0) {
     const singleMail = await api.fetch(
-      `/api/mail/${mailIdQuery.value}`
+      `/open_api/public_mail/${mailIdQuery.value}?address=${encodedAddress}`
     )
 
     if (singleMail) {
@@ -40,44 +69,24 @@ const fetchMailData = async (limit, offset) => {
   }
 
   return await api.fetch(
-    `/api/mails?limit=${limit}&offset=${offset}`
+    `/open_api/public_mails?address=${encodedAddress}&limit=${limit}&offset=${offset}`
   )
 }
-
 
 /* =========================================================
-   DELETE MAIL
+   PUBLIC VIEWER MUTATIONS
+   =========================================================
+   Homepage public viewer is intentionally READ ONLY.
+   Delete and read-status mutation remain protected by JWT.
    ========================================================= */
 
-const deleteMail = async (curMailId) => {
-  await api.fetch(
-    `/api/mails/${curMailId}`,
-    {
-      method: 'DELETE'
-    }
-  )
+const deleteMail = async () => {
+  message.warning('Public mailbox is read-only')
 }
 
-
-/* =========================================================
-   READ / UNREAD STATUS
-   ========================================================= */
-
-const updateMailReadStatus = async (id, isUnread) => {
-  await api.fetch(
-    `/api/mails/${id}/read`,
-    {
-      method: 'PATCH',
-
-      body: JSON.stringify({
-        isUnread
-      }),
-
-      showLoading: false
-    }
-  )
+const updateMailReadStatus = async () => {
+  // Intentionally disabled for the public viewer.
 }
-
 
 /* =========================================================
    S3 ATTACHMENT
@@ -93,7 +102,6 @@ const saveToS3 = async (
       `/api/attachment/put_url`,
       {
         method: 'POST',
-
         body: JSON.stringify({
           key: `${mail_id}/${filename}`
         })
@@ -128,40 +136,25 @@ const saveToS3 = async (
   }
 }
 
-
-/* =========================================================
-   MAIL QUERY
-   ========================================================= */
-
-const mailBoxKey = ref('')
-
-const mailIdQuery = ref('')
-
-const showMailIdQuery = ref(false)
-
-
-const queryMail = () => {
-  mailBoxKey.value = Date.now()
-}
-
-
 /* =========================================================
    ROUTE WATCH
    ========================================================= */
 
 watch(
-  route,
-  () => {
-    if (!route.query.mail_id) {
-      showMailIdQuery.value = false
-
-      mailIdQuery.value = ''
-
+  () => route.query.mail_id,
+  (mailId) => {
+    if (mailId) {
+      showMailIdQuery.value = true
+      mailIdQuery.value = String(mailId)
       queryMail()
+      return
     }
+
+    showMailIdQuery.value = false
+    mailIdQuery.value = ''
+    queryMail()
   }
 )
-
 
 /* =========================================================
    INITIAL LOAD
@@ -170,29 +163,16 @@ watch(
 onMounted(() => {
   if (route.query.mail_id) {
     showMailIdQuery.value = true
-
-    mailIdQuery.value =
-      route.query.mail_id
-
-    queryMail()
+    mailIdQuery.value = String(route.query.mail_id)
   }
 })
 </script>
 
-
 <template>
-
   <main class="mail-viewer-page">
-
     <div class="mail-viewer-container">
 
-
-      <!-- ===================================================
-           HERO
-           =================================================== -->
-
       <header class="mail-viewer-hero">
-
         <h1>
           Mail Viewer
         </h1>
@@ -200,39 +180,19 @@ onMounted(() => {
         <p>
           Enter email and click Load to view inbox
         </p>
-
       </header>
-
 
       <div class="mail-viewer-divider"></div>
 
-
-      <!-- ===================================================
-           ADDRESS CONTROL
-           =================================================== -->
-
       <section class="mail-viewer-address">
-
-        <AddressBar />
-
+        <AddressBar @load="loadPublicMailbox" />
       </section>
 
-
-      <!-- ===================================================
-           MAIL ID QUERY
-           Only appears when URL contains ?mail_id=
-           =================================================== -->
-
       <section
-        v-if="
-          settings.address &&
-          showMailIdQuery
-        "
+        v-if="viewerAddress && showMailIdQuery"
         class="mail-query-card"
       >
-
         <n-input-group>
-
           <n-input
             v-model:value="mailIdQuery"
             placeholder="Mail ID"
@@ -242,105 +202,48 @@ onMounted(() => {
             type="primary"
             @click="queryMail"
           >
-
             Load
-
           </n-button>
-
         </n-input-group>
-
       </section>
 
-
-      <!-- ===================================================
-           MAILBOX
-           =================================================== -->
-
       <section
-        v-if="settings.address"
+        v-if="viewerAddress"
         class="mail-viewer-workspace"
       >
-
         <MailBox
-
           :key="mailBoxKey"
-
           :showEMailTo="false"
-
-          :showReply="
-            openSettings.enableSendMail
-          "
-
-          :showSaveS3="
-            openSettings.isS3Enabled
-          "
-
-          :saveToS3="
-            saveToS3
-          "
-
-          :enableUserDeleteEmail="
-            openSettings.enableUserDeleteEmail
-          "
-
-          :fetchMailData="
-            fetchMailData
-          "
-
-          :deleteMail="
-            deleteMail
-          "
-
-          :showFilterInput="
-            false
-          "
-
-          :enableMailReadStatus="
-            openSettings.enableMailReadStatus
-          "
-
-          :updateMailReadStatus="
-            updateMailReadStatus
-          "
-
+          :showReply="false"
+          :showSaveS3="false"
+          :saveToS3="saveToS3"
+          :enableUserDeleteEmail="false"
+          :fetchMailData="fetchMailData"
+          :deleteMail="deleteMail"
+          :showFilterInput="false"
+          :enableMailReadStatus="false"
+          :updateMailReadStatus="updateMailReadStatus"
         />
-
       </section>
 
-
-      <!-- ===================================================
-           EMPTY STATE
-           =================================================== -->
-
       <section
-        v-else-if="settings.fetched"
+        v-else
         class="mail-viewer-empty"
       >
-
         <div class="empty-mailbox-panel">
-
           <span>
             MailBox
           </span>
-
         </div>
-
 
         <div class="empty-content-panel">
-
           Email content will appear here.
-
         </div>
-
       </section>
 
-
     </div>
-
   </main>
-
 </template>
-
 
 <style scoped>
 
