@@ -95,6 +95,29 @@ const getPublicAddress = (c: Context<HonoCustomType>): string | null => {
     return address;
 };
 
+const randomPublicAddress = async (c: Context<HonoCustomType>) => {
+    const allowedDomains = getConfiguredDomains(c);
+
+    if (allowedDomains.length === 0) {
+        return c.json({ error: 'No public email domain configured' }, 500);
+    }
+
+    const domain = allowedDomains[0];
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const bytes = new Uint8Array(10);
+    crypto.getRandomValues(bytes);
+
+    const prefix = Array.from(
+        bytes,
+        (byte) => chars[byte % chars.length]
+    ).join('');
+
+    return c.json({
+        address: `${prefix}@${domain}`,
+        prefix
+    });
+};
+
 const publicListMails = async (c: Context<HonoCustomType>) => {
     const address = getPublicAddress(c);
 
@@ -226,6 +249,7 @@ export default {
     getMail,
     publicListMails,
     publicGetMail,
+    randomPublicAddress,
     updateMailReadStatus,
     deleteMail,
     getSettings,
