@@ -107,7 +107,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="mail-viewer-page">
+    <div class="mail-viewer-shell">
+      <header class="mail-viewer-hero">
+        <h1>Mail Viewer</h1>
+        <p>Enter email and click Load to view inbox</p>
+      </header>
+
+      <div class="mail-viewer-divider"></div>
     <div v-if="useSimpleIndex">
       <SimpleIndex />
     </div>
