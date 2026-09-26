@@ -107,7 +107,7 @@ onMounted(async () => {
                     <Header v-if="$route.path !== '/'" />
                     <router-view></router-view>
                   </n-layout>
-                  <Footer />
+                  <Footer v-if="$route.path !== '/'" />
                 </n-space>
               </div>
             </n-gi>
