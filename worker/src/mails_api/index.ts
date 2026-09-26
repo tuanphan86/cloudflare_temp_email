@@ -15,6 +15,7 @@ export const api = new Hono<HonoCustomType>()
 // No mailbox JWT is required by these handlers.
 // IMPORTANT: keep mutation routes out of /open_api/public_*.
 // ============================================================
+api.get('/open_api/random_address', mails_crud.randomPublicAddress)
 api.get('/open_api/public_mails', mails_crud.publicListMails)
 api.get('/open_api/public_mail/:mail_id', mails_crud.publicGetMail)
 
