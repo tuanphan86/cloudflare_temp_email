@@ -98,7 +98,7 @@ onMounted(async () => {
 
                 <div class="viewer-address-input">
 
-                    <AddressSelect />
+                    <AddressSelect :show-copy="false" />
 
                 </div>
 
